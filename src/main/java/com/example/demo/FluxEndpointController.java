@@ -14,17 +14,19 @@ import org.springframework.data.domain.PageRequest;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import static org.springframework.http.MediaType.APPLICATION_NDJSON_VALUE;
 
 
 @RestController
 @RequestMapping("/api")
 public class FluxEndpointController {
-    public static final int DELAY = 50;
-    @GetMapping(value = "/flux-endpoint", produces = "application/json")
-    public ResponseEntity<Flux<String>> getFluxData() {
-        return ResponseEntity.ok().body(Flux.fromIterable(getMockStrings())
-                .delayElements(Duration.ofMillis(DELAY))
-                .map(data -> "{\"value\": \"" + data + "\"}"));
+    public static final int DELAY = 1;
+    @GetMapping(value = "/flux-endpoint", produces = APPLICATION_NDJSON_VALUE)
+    public Flux<Map<String, Integer>> getFluxData() {
+        return Flux.range(100, 120)
+                .map(s->wait(s))
+                .map(data -> Map.of("value", data));
     }
     @GetMapping(value = "/mono-endpoint", produces = "application/json")
     public ResponseEntity<Mono<String>> getMonoData() {
@@ -57,5 +59,16 @@ public class FluxEndpointController {
             allStrings.add("String " + i);
         }
         return allStrings;
+    }
+
+    private int wait(int s) {
+        try {
+            // Sleep for 1000 milliseconds (1 second)
+            Thread.sleep(s*1000);
+        } catch (InterruptedException e) {
+            // Handle the exception if needed
+            e.printStackTrace();
+        }
+        return s;
     }
 }
